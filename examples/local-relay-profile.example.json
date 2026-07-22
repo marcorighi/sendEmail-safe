@@ -1,0 +1,11 @@
+{
+  "auth": false,
+  "from": "alerts@example.org",
+  "host": "127.0.0.1",
+  "password": "",
+  "port": 25,
+  "security": "plain",
+  "timeout": 30.0,
+  "tls_verify": true,
+  "user": ""
+}

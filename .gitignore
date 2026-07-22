@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+.venv/
+venv/
+
+# Build and test output
+build/
+dist/
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Editors
+*~
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Logs and migration backups
+*.log
+*.tar.gz
+sendemail-safe-backups/
+
+# Local credentials and profiles
+.config/sendemail-safe/
+profiles/
+*.secret.json
+*.credentials.json
+*.local.json
+
+# OS metadata
+.DS_Store
+Thumbs.db

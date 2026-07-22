@@ -1,0 +1,12 @@
+{
+  "auth": true,
+  "from": "sender@example.org",
+  "host": "smtp-relay.brevo.com",
+  "password": "replace-with-your-brevo-smtp-key",
+  "port": 587,
+  "reply_to": "replies@example.org",
+  "security": "starttls",
+  "timeout": 30.0,
+  "tls_verify": true,
+  "user": "replace-with-your-brevo-smtp-login"
+}

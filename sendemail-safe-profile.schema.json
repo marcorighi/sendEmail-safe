@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "sendEmail-safe SMTP profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "auth",
+    "from",
+    "host",
+    "password",
+    "port",
+    "security",
+    "timeout",
+    "tls_verify",
+    "user"
+  ],
+  "properties": {
+    "auth": {
+      "type": "boolean"
+    },
+    "ca_file": {
+      "type": "string"
+    },
+    "from": {
+      "type": "string",
+      "minLength": 1
+    },
+    "host": {
+      "type": "string",
+      "minLength": 1
+    },
+    "log": {
+      "type": "string"
+    },
+    "password": {
+      "type": "string"
+    },
+    "port": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535
+    },
+    "reply_to": {
+      "type": "string"
+    },
+    "security": {
+      "type": "string",
+      "enum": [
+        "starttls",
+        "ssl",
+        "plain",
+        "auto"
+      ]
+    },
+    "timeout": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "tls_verify": {
+      "type": "boolean"
+    },
+    "user": {
+      "type": "string"
+    }
+  }
+}
