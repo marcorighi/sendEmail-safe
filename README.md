@@ -262,7 +262,7 @@ python3 sendEmail-safe-migrate.py \
 The utility initially performs a dry inspection and displays the files and operations it intends to apply. After confirmation, it:
 
 1. creates a private compressed backup;
-2. replaces `sendEmail` with `/usr/local/bin/sendEmail-safe.py`;
+2. replaces `sendEmail` with the `sendEmail-safe.py` executable located alongside the migration utility (typically `/usr/local/bin/sendEmail-safe.py` for a manual installation or `/usr/bin/sendEmail-safe.py` for distribution packages);
 3. adds `--config PROFILE`;
 4. removes `-xp` and its value;
 5. removes `-s`, `-xu`, and `-o tls=...` by default so that the selected profile is the SMTP source of truth;

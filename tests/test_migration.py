@@ -37,7 +37,7 @@ class MigrationTests(unittest.TestCase):
         )
         changed, statistics = migration.migrate_text(original, 'brevo')
         self.assertIn(
-            '/usr/local/bin/sendEmail-safe.py --config brevo',
+            migration.NEW_COMMAND + ' --config brevo',
             changed
         )
         self.assertNotIn('-xp', changed)

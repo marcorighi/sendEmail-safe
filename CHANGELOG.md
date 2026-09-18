@@ -11,6 +11,14 @@ The format is based on Keep a Changelog principles, and the project uses semanti
 - Additional compatibility tests against real-world legacy `sendEmail` command patterns.
 - Runtime validation on additional Linux distributions and older Python installations.
 
+## [1.0.1] - 2026-09-18
+
+### Fixed
+
+- Made the migration utility resolve `sendEmail-safe.py` relative to its own installation directory instead of assuming `/usr/local/bin`.
+- Improved compatibility with distribution packages installing executables under `/usr/bin`.
+- Updated migration tests to support installation-prefix-independent paths.
+
 ## [1.0.0] - 2026-07-22
 
 ### Added

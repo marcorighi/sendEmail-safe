@@ -17,8 +17,11 @@ import tarfile
 import time
 
 PROGRAM = 'sendEmail-safe-migrate.py'
-VERSION = '1.0.0'
-NEW_COMMAND = '/usr/local/bin/sendEmail-safe.py'
+VERSION = '1.0.1'
+NEW_COMMAND = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)),
+    'sendEmail-safe.py'
+)
 EXCLUDED_DIRECTORIES = {
     '.git',
     '.hg',
