@@ -132,7 +132,7 @@ def save_profile(name, address, client, refresh_token):
         os.fchmod(descriptor, stat.S_IRUSR | stat.S_IWUSR)
         with os.fdopen(descriptor, 'w') as handle:
             json.dump(profile, handle, indent=2, sort_keys=True)
-            handle.write('\\n')
+            handle.write('\n')
             handle.flush()
             os.fsync(handle.fileno())
         # Hard-link creation fails when a file appears concurrently,
