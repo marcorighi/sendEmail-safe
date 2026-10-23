@@ -127,7 +127,9 @@ class GmailTests(unittest.TestCase):
 
     def test_client_secrets_default_per_account_then_shared(self):
         with tempfile.TemporaryDirectory() as home:
-            directory = os.path.join(home, '.config', 'sendEmail-safe', 'secrets')
+            root = os.path.join(home, '.config', 'sendEmail-safe')
+            directory = os.path.join(root, 'secrets')
+            os.makedirs(root, mode=0o700)
             os.makedirs(directory, mode=0o700)
             account, shared = auth.client_secrets_candidates(
                 'student+test@gmail.com', home=home
