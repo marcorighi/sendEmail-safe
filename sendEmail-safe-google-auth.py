@@ -20,6 +20,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import webbrowser
+import sendemail_safe_profiles as profiles
 
 
 AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
@@ -87,17 +88,32 @@ def exchange_code(client, code, redirect_uri, verifier):
     return token
 
 
+def profile_destination(name, address):
+    """Resolve the new path without writing a profile."""
+    home = profiles.effective_home()
+    if name:
+        if '/' not in name and not re.match(r'^[A-Za-z0-9_-]+$', name):
+            raise ValueError('profile name: use ASCII letters, digits, _ or -')
+        return profiles.resolve_config(
+            name, home=home, allow_legacy=True
+        )
+    return profiles.default_profile_path(
+        address, 'gmail.googleapis.com', home=home
+    )
+
+
 def save_profile(name, address, client, refresh_token):
-    if not re.match(r'^[A-Za-z0-9_-]+$', name):
-        raise ValueError('profile name: use letters, numbers, _ or -')
-    home = os.path.expanduser('~')
-    directory = os.path.join(home, '.config', 'sendemail-safe')
+    path = profile_destination(name, address)
+    directory = os.path.dirname(path)
     if os.path.islink(directory):
         raise ValueError('profile directory must not be a symlink')
     if not os.path.isdir(directory):
         os.makedirs(directory, mode=0o700)
     os.chmod(directory, 0o700)
-    path = os.path.join(directory, name + '.json')
+    if not name:
+        profiles.verify_no_collision(
+            path, address, 'gmail.googleapis.com'
+        )
     if os.path.lexists(path):
         raise ValueError('profile already exists: ' + path)
 
@@ -116,11 +132,12 @@ def save_profile(name, address, client, refresh_token):
         os.fchmod(descriptor, stat.S_IRUSR | stat.S_IWUSR)
         with os.fdopen(descriptor, 'w') as handle:
             json.dump(profile, handle, indent=2, sort_keys=True)
-            handle.write('\n')
+            handle.write('\\n')
             handle.flush()
             os.fsync(handle.fileno())
-        # The directory is private; existing profile files are never overwritten.
-        os.replace(temporary, path)
+        # Hard-link creation fails when a file appears concurrently,
+        # preventing inadvertent overwrites even in that race.
+        os.link(temporary, path)
     finally:
         if os.path.exists(temporary):
             os.unlink(temporary)
@@ -182,7 +199,7 @@ def main():
     parser = argparse.ArgumentParser(
         description='Create a Gmail API OAuth 2.0 profile (gmail.send only).'
     )
-    parser.add_argument('--config', required=True, help='New profile name')
+    parser.add_argument('--config', help='Optional profile name or path')
     parser.add_argument('--from', dest='sender', required=True, help='Gmail sender')
     parser.add_argument(
         '--client-secrets', required=True,
@@ -195,10 +212,12 @@ def main():
         parser.error('run as the account owner, not root')
     if args.timeout <= 0:
         parser.error('--timeout must be positive')
-    if not re.match(r'^[A-Za-z0-9_-]+$', args.config):
-        parser.error('invalid profile name')
     if not args.sender or '\n' in args.sender or '\r' in args.sender:
         parser.error('invalid sender address')
+    destination = profile_destination(args.config, args.sender)
+    if os.path.lexists(destination):
+        parser.error('profile already exists: ' + destination)
+    print('Default profile destination: {}'.format(destination))
     client = read_client(args.client_secrets)
     verifier = b64url(os.urandom(48))
     state = b64url(os.urandom(24))
