@@ -17,7 +17,7 @@ import tarfile
 import time
 
 PROGRAM = 'sendEmail-safe-migrate.py'
-VERSION = '1.2.0'
+VERSION = '1.2.1'
 NEW_COMMAND = os.path.join(
     os.path.dirname(os.path.realpath(__file__)),
     'sendEmail-safe.py'
