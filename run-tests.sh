@@ -11,7 +11,9 @@ PYTHON=${PYTHON:-python3}
 "$PYTHON" -m py_compile \
     sendEmail-safe.py \
     sendEmail-safe-configure.py \
-    sendEmail-safe-migrate.py
+    sendEmail-safe-migrate.py \
+    sendEmail-safe-google-auth.py \
+    sendemail_safe_google.py
 
 sh -n install.sh
 sh -n uninstall.sh
