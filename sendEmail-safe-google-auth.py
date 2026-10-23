@@ -66,6 +66,18 @@ def resolve_client_secrets(path, address, home=None):
     candidates = client_secrets_candidates(address, home=home)
     for candidate in candidates:
         if os.path.lexists(candidate):
+            # Both directories must be private, not just the JSON file.
+            root = os.path.dirname(os.path.dirname(candidate))
+            directory = os.path.dirname(candidate)
+            for folder in (root, directory):
+                info = os.lstat(folder)
+                if (not stat.S_ISDIR(info.st_mode) or
+                        info.st_uid != os.geteuid() or
+                        stat.S_IMODE(info.st_mode) & 0o077):
+                    raise ValueError(
+                        'OAuth client directory must be user-owned and '
+                        'private (chmod 700): ' + folder
+                    )
             return candidate
     raise ValueError(
         'Google OAuth client file not found. Expected one of: {}. '
