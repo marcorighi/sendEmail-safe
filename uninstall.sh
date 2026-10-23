@@ -12,7 +12,9 @@ fi
 rm -f \
     "$BINDIR/sendEmail-safe.py" \
     "$BINDIR/sendEmail-safe-configure.py" \
-    "$BINDIR/sendEmail-safe-migrate.py"
+    "$BINDIR/sendEmail-safe-migrate.py" \
+    "$BINDIR/sendEmail-safe-google-auth.py" \
+    "$BINDIR/sendemail_safe_google.py"
 
 printf 'Removed sendEmail-safe programs from %s.\n' "$BINDIR"
 printf 'User profiles were deliberately left unchanged.\n'
