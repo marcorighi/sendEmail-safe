@@ -11,6 +11,21 @@ The format is based on Keep a Changelog principles, and the project uses semanti
 - Additional compatibility tests against real-world legacy `sendEmail` command patterns.
 - Runtime validation on additional Linux distributions and older Python installations.
 
+## [1.2.1] - 2026-10-23
+
+### Added
+
+- Optional Google OAuth Desktop client JSON file path with deterministic
+  per-account and shared defaults under `~/.config/sendEmail-safe/secrets/`.
+- Private-file and private-directory permission checks for default OAuth
+  client credentials, with explicit `--client-secrets` override.
+- Tests for default lookup precedence, overrides and unsafe credential files.
+
+### Changed
+
+- Gmail OAuth authorization no longer requires `--client-secrets` when a
+  suitable client JSON is installed in the default secrets directory.
+
 ## [1.2.0] - 2026-10-23
 
 ### Added

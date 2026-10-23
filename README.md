@@ -218,13 +218,39 @@ Desktop app** client JSON downloaded locally. In Testing mode, add the Gmail
 account as a test user. Only create credentials in your own Google Cloud
 project. Never commit downloaded OAuth client files or real profiles.
 
-After installing, run this **as the Unix user who will send the mail**:
+After downloading a Google Cloud OAuth **Desktop application** client JSON,
+install it once in the private default credentials directory:
 
 ```bash
-sendEmail-safe-google-auth.py \
-  --from 'your-account@gmail.com' \
-  --client-secrets "$HOME/private/google-desktop-client.json"
+install -d -m 700 "$HOME/.config/sendEmail-safe"
+install -d -m 700 "$HOME/.config/sendEmail-safe/secrets"
+install -m 600 /path/to/your-google-desktop-client.json \
+  "$HOME/.config/sendEmail-safe/secrets/google_oauth_client.json"
 ```
+
+Then authorize Gmail as the Unix user who will send mail; **no client secrets
+argument is needed**:
+
+```bash
+sendEmail-safe-google-auth.py --from 'your-account@gmail.com'
+```
+
+The helper selects the OAuth client JSON in this order:
+
+1. `~/.config/sendEmail-safe/secrets/<login_server>_secrets.json`,
+   using the same normalized login and server stem as the profile filename
+   (for Gmail, the server is `gmail.googleapis.com`).
+2. `~/.config/sendEmail-safe/secrets/google_oauth_client.json`, shared by
+   multiple Gmail accounts.
+
+An explicit `--client-secrets /path/to/client.json` overrides both defaults.
+The OAuth client JSON contains a Google Cloud *application* credential,
+separate from the Gmail account's refresh token in its profile JSON. Files
+are never automatically downloaded or created with placeholder credentials.
+Both directories must be user-owned and private (`0700`); Google client
+JSON files must be owned by the user with no group/other access (`0600`
+recommended), and symlinks are rejected.
+
 
 A temporary web server listens on `127.0.0.1` and opens the system browser
 (Brave is fine if configured as the default). Consent is bound to a random

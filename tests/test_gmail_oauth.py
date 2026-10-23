@@ -125,5 +125,101 @@ class GmailTests(unittest.TestCase):
             self.assertEqual(profile['timeout'], 30.0)
 
 
+    def test_client_secrets_default_per_account_then_shared(self):
+        with tempfile.TemporaryDirectory() as home:
+            root = os.path.join(home, '.config', 'sendEmail-safe')
+            directory = os.path.join(root, 'secrets')
+            os.makedirs(root, mode=0o700)
+            os.makedirs(directory, mode=0o700)
+            account, shared = auth.client_secrets_candidates(
+                'student+test@gmail.com', home=home
+            )
+            self.assertEqual(os.path.basename(account),
+                             'student_test_gmail_com_gmail_googleapis_com_secrets.json')
+            self.assertEqual(os.path.basename(shared), 'google_oauth_client.json')
+            with self.assertRaises(ValueError):
+                auth.resolve_client_secrets(None, 'student+test@gmail.com', home=home)
+            with open(shared, 'w') as target:
+                json.dump({'installed': {'client_id': 'shared-client'}}, target)
+            os.chmod(shared, 0o600)
+            self.assertEqual(
+                auth.resolve_client_secrets(None, 'student+test@gmail.com', home=home),
+                shared
+            )
+            with open(account, 'w') as target:
+                json.dump({'installed': {'client_id': 'personal-client'}}, target)
+            os.chmod(account, 0o600)
+            self.assertEqual(
+                auth.resolve_client_secrets(None, 'student+test@gmail.com', home=home),
+                account
+            )
+            self.assertEqual(auth.read_client(account)['client_id'], 'personal-client')
+
+    def test_explicit_client_secrets_overrides_defaults(self):
+        with tempfile.TemporaryDirectory() as home:
+            custom = os.path.join(home, 'other-client.json')
+            with open(custom, 'w') as target:
+                json.dump({'installed': {'client_id': 'another-client'}}, target)
+            os.chmod(custom, 0o600)
+            self.assertEqual(auth.resolve_client_secrets(
+                custom, 'account@gmail.com', home=home
+            ), custom)
+            self.assertEqual(auth.resolve_client_secrets(
+                '~/other-client.json', 'account@gmail.com', home=home
+            ), custom)
+
+    def test_client_secrets_reject_world_readable_and_symlink(self):
+        with tempfile.TemporaryDirectory() as home:
+            source = os.path.join(home, 'google-client.json')
+            with open(source, 'w') as target:
+                json.dump({'installed': {'client_id': 'example'}}, target)
+            os.chmod(source, 0o644)
+            with self.assertRaises(ValueError):
+                auth.read_client(source)
+            os.chmod(source, 0o600)
+            alias = os.path.join(home, 'linked-client.json')
+            os.symlink(source, alias)
+            with self.assertRaises(ValueError):
+                auth.read_client(alias)
+            self.assertEqual(auth.read_client(source)['client_id'], 'example')
+
+    def test_client_secrets_reject_wrong_google_client_type(self):
+        with tempfile.TemporaryDirectory() as home:
+            source = os.path.join(home, 'web-client.json')
+            with open(source, 'w') as target:
+                json.dump({'web': {'client_id': 'example'}}, target)
+            os.chmod(source, 0o600)
+            with self.assertRaises(ValueError):
+                auth.read_client(source)
+
+
+    def test_default_client_rejects_public_secrets_directory(self):
+        with tempfile.TemporaryDirectory() as home:
+            root = os.path.join(home, '.config', 'sendEmail-safe')
+            directory = os.path.join(root, 'secrets')
+            os.makedirs(directory, mode=0o700)
+            shared = os.path.join(directory, 'google_oauth_client.json')
+            with open(shared, 'w') as out:
+                json.dump({'installed': {'client_id': 'id'}}, out)
+            os.chmod(shared, 0o600)
+            os.chmod(directory, 0o755)
+            with self.assertRaises(ValueError):
+                auth.resolve_client_secrets(
+                    None, 'test@gmail.com', home=home
+                )
+            os.chmod(directory, 0o700)
+            os.chmod(root, 0o755)
+            with self.assertRaises(ValueError):
+                auth.resolve_client_secrets(
+                    None, 'test@gmail.com', home=home
+                )
+            os.chmod(root, 0o700)
+            self.assertEqual(
+                auth.resolve_client_secrets(
+                    None, 'test@gmail.com', home=home
+                ), shared
+            )
+
+
 if __name__ == '__main__':
     unittest.main()

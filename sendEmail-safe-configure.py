@@ -16,7 +16,7 @@ import tempfile
 import sendemail_safe_profiles as profiles
 
 PROGRAM = 'sendEmail-safe-configure.py'
-VERSION = '1.2.0'
+VERSION = '1.2.1'
 CONFIG_DIRNAME = profiles.NEW_CONFIG_DIR
 
 

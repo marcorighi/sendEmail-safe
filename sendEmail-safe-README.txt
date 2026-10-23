@@ -1,6 +1,21 @@
 SENDEMAIL-SAFE OPERATIONAL GUIDE
 ===============================
 
+Google OAuth client credential lookup (1.2.1)
+----------------------------------------------
+
+The --client-secrets argument is optional. Place the Google OAuth Desktop
+client JSON at:
+  ~/.config/sendEmail-safe/secrets/google_oauth_client.json
+
+For account-specific clients, use:
+  ~/.config/sendEmail-safe/secrets/<login_server>_secrets.json
+
+A per-account file takes precedence; the shared one is a fallback. Use
+--client-secrets PATH to override. Keep both directories private (0700)
+and client JSON files user-owned with mode 0600. The refresh token stays
+in the separate account profile JSON. No secrets are installed by AUR.
+
 Default profile naming (1.2.0)
 ------------------------------
 
