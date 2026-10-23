@@ -93,7 +93,7 @@ class GmailTests(unittest.TestCase):
 
     def test_gmail_profile_is_private_and_never_overwritten(self):
         with tempfile.TemporaryDirectory() as home:
-            with mock.patch.object(auth.os.path, 'expanduser',
+            with mock.patch.object(auth.profiles, 'effective_home',
                                    return_value=home):
                 client = {'client_id': 'id', 'client_secret': 'public-client-value'}
                 path = auth.save_profile(
