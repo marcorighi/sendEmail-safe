@@ -32,11 +32,81 @@ def b64url(raw):
     return base64.urlsafe_b64encode(raw).rstrip(b'=').decode('ascii')
 
 
+def client_secrets_candidates(address, home=None):
+    """Default client OAuth JSON lookup: account-specific, then shared.
+
+    Client credentials identify the *application* and may be shared across
+    accounts. Refresh tokens are stored separately in user profile JSON files.
+    """
+    home = home or profiles.effective_home()
+    root = os.path.join(home, profiles.NEW_CONFIG_DIR)
+    secret_dir = os.path.join(root, 'secrets')
+    account = profiles.profile_filename(
+        address, 'gmail.googleapis.com'
+    )[:-5]
+    return [
+        os.path.join(secret_dir, account + '_secrets.json'),
+        os.path.join(secret_dir, 'google_oauth_client.json')
+    ]
+
+
+def resolve_client_secrets(path, address, home=None):
+    """Pick a path; an explicit --client-secrets always takes precedence.
+
+    No directories or files are created here, and missing default credentials
+    cause an actionable error before the browser authorization flow.
+    """
+    home = home or profiles.effective_home()
+    if path:
+        if path == '~':
+            return home
+        if path.startswith('~/'):
+            return os.path.join(home, path[2:])
+        return os.path.abspath(path)
+    candidates = client_secrets_candidates(address, home=home)
+    for candidate in candidates:
+        if os.path.lexists(candidate):
+            return candidate
+    raise ValueError(
+        'Google OAuth client file not found. Expected one of: {}. '
+        'Place the downloaded Desktop client JSON there (mode 0600) or '
+        'specify --client-secrets PATH'.format(', '.join(candidates))
+    )
+
+
 def read_client(path):
-    with open(path, 'r') as handle:
-        data = json.load(handle)
+    """Read a private, regular, user-owned Google Desktop client JSON.
+
+    Refuse symlinks and group/other permissions. Avoid reading a named pipe,
+    non-JSON file or OAuth client of the wrong Google application type.
+    """
+    path = os.path.abspath(path)
+    if os.path.islink(path):
+        raise ValueError('OAuth client JSON must not be a symbolic link')
+    flags = os.O_RDONLY | getattr(os, 'O_NOFOLLOW', 0)
+    descriptor = os.open(path, flags)
+    try:
+        info = os.fstat(descriptor)
+        if not stat.S_ISREG(info.st_mode):
+            raise ValueError('OAuth client JSON must be a regular file')
+        if info.st_uid != os.geteuid():
+            raise ValueError('OAuth client JSON must be owned by this user')
+        if stat.S_IMODE(info.st_mode) & 0o077:
+            raise ValueError(
+                'OAuth client JSON permissions are unsafe; use chmod 600'
+            )
+        with os.fdopen(descriptor, 'r') as handle:
+            descriptor = None
+            data = json.load(handle)
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+    if not isinstance(data, dict):
+        raise ValueError('OAuth client JSON must contain an object')
     client = data.get('installed')
-    if not isinstance(client, dict) or not client.get('client_id'):
+    if not isinstance(client, dict) or not isinstance(
+        client.get('client_id'), str
+    ) or not client['client_id']:
         raise ValueError('expected Google OAuth Desktop app client JSON')
     return client
 
@@ -202,8 +272,10 @@ def main():
     parser.add_argument('--config', help='Optional profile name or path')
     parser.add_argument('--from', dest='sender', required=True, help='Gmail sender')
     parser.add_argument(
-        '--client-secrets', required=True,
-        help='Google OAuth Desktop client JSON downloaded from Google Cloud'
+        '--client-secrets',
+        help='optional Google OAuth Desktop client JSON; defaults to '
+             '~/.config/sendEmail-safe/secrets/<login_server>_secrets.json '
+             'or secrets/google_oauth_client.json'
     )
     parser.add_argument('--timeout', type=int, default=180)
     args = parser.parse_args()
@@ -218,7 +290,11 @@ def main():
     if os.path.lexists(destination):
         parser.error('profile already exists: ' + destination)
     print('Default profile destination: {}'.format(destination))
-    client = read_client(args.client_secrets)
+    secrets_path = resolve_client_secrets(
+        args.client_secrets, args.sender
+    )
+    print('Using Google OAuth client: {}'.format(secrets_path))
+    client = read_client(secrets_path)
     verifier = b64url(os.urandom(48))
     state = b64url(os.urandom(24))
     code, redirect_uri = receive_code(
