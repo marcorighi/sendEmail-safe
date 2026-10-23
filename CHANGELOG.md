@@ -11,6 +11,21 @@ The format is based on Keep a Changelog principles, and the project uses semanti
 - Additional compatibility tests against real-world legacy `sendEmail` command patterns.
 - Runtime validation on additional Linux distributions and older Python installations.
 
+## [1.2.0] - 2026-10-23
+
+### Added
+
+- Deterministic profile naming from login plus provider server, with ASCII-only detox-like normalization.
+- New case-sensitive `~/.config/sendEmail-safe/` directory for newly created profiles.
+- Omitted `--config` accepted when exactly one matching secure profile exists.
+- Collision checks to prevent overwriting another normalized account.
+- Continued explicit legacy profile lookup in `~/.config/sendemail-safe/`.
+
+### Changed
+
+- Both interactive SMTP configuration and Gmail API authorization default to derived profile names.
+- Explicit `--config NAME|PATH` remains supported and no credentials are migrated automatically.
+
 ## [1.1.0] - 2026-10-23
 
 ### Added
