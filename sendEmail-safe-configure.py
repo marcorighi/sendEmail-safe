@@ -13,10 +13,11 @@ import os
 import pwd
 import stat
 import tempfile
+import sendemail_safe_profiles as profiles
 
 PROGRAM = 'sendEmail-safe-configure.py'
 VERSION = '1.1.0'
-CONFIG_DIRNAME = os.path.join('.config', 'sendemail-safe')
+CONFIG_DIRNAME = profiles.NEW_CONFIG_DIR
 
 
 def effective_home():
@@ -38,28 +39,10 @@ def path_is_inside(path, directory):
 
 
 def resolve_config(value):
-    """Resolve a profile name or explicit path inside the effective user's home."""
-    home = effective_home()
-    config_root = os.path.join(home, CONFIG_DIRNAME)
-
-    if value == '~':
-        candidate = home
-    elif value.startswith('~/'):
-        candidate = os.path.join(home, value[2:])
-    elif os.path.isabs(value):
-        candidate = value
-    elif '/' in value or value.startswith('.'):
-        candidate = os.path.abspath(value)
-    else:
-        filename = value if value.endswith('.json') else value + '.json'
-        candidate = os.path.join(config_root, filename)
-
-    candidate = os.path.realpath(candidate)
-    if not path_is_inside(candidate, home):
-        raise SystemExit(
-            '{}: the file must be inside {}'.format(PROGRAM, home)
-        )
-    return candidate
+    try:
+        return profiles.resolve_config(value, home=effective_home())
+    except ValueError as exc:
+        raise SystemExit('{}: {}'.format(PROGRAM, exc))
 
 
 def ask(label, default=''):
@@ -191,8 +174,8 @@ def main():
     parser.add_argument(
         '-C',
         '--config',
-        required=True,
-        help='profile name or path inside the effective user\'s home'
+        required=False,
+        help='optional name or path (default: SMTP login plus server)'
     )
     parser.add_argument(
         '--version',
@@ -201,10 +184,8 @@ def main():
     )
     args = parser.parse_args()
 
-    path = resolve_config(args.config)
-    directory = os.path.dirname(path)
-    ensure_private_directory(directory)
-    existing = load_existing(path)
+    path = resolve_config(args.config) if args.config else None
+    existing = load_existing(path) if path else {}
 
     host = ask('SMTP server', existing.get('host', 'smtp-relay.brevo.com'))
     port = prompt_port(existing)
@@ -227,6 +208,26 @@ def main():
     sender = ask('Default sender', sender_default)
     if not sender:
         raise SystemExit('{}: the default sender must not be empty'.format(PROGRAM))
+
+    if path is None:
+        # Use sender as the identity when SMTP authentication is disabled.
+        login = user or sender
+        try:
+            path = profiles.default_profile_path(
+                login, host, home=effective_home()
+            )
+            profiles.verify_no_collision(path, login, host)
+        except (ValueError, OSError) as exc:
+            raise SystemExit('{}: {}'.format(PROGRAM, exc))
+        if os.path.lexists(path):
+            raise SystemExit(
+                '{}: profile already exists: {}; use --config to edit it'.format(
+                    PROGRAM, path
+                )
+            )
+        print('Default profile: {}'.format(path))
+    directory = os.path.dirname(path)
+    ensure_private_directory(directory)
 
     security = prompt_security(existing)
     timeout = prompt_timeout(existing)
@@ -290,7 +291,7 @@ def main():
 
     password = None
     print('Profile written to {} with mode 0600.'.format(path))
-    print('Usage: sendEmail-safe.py --config {} ...'.format(args.config))
+    print('Usage: sendEmail-safe.py --config {} ...'.format(path))
 
 
 if __name__ == '__main__':
