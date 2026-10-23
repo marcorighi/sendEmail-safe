@@ -13,7 +13,8 @@ PYTHON=${PYTHON:-python3}
     sendEmail-safe-configure.py \
     sendEmail-safe-migrate.py \
     sendEmail-safe-google-auth.py \
-    sendemail_safe_google.py
+    sendemail_safe_google.py \
+    sendemail_safe_profiles.py
 
 sh -n install.sh
 sh -n uninstall.sh

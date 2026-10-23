@@ -31,7 +31,7 @@ class SendEmailSafeTests(unittest.TestCase):
                 expected = os.path.join(
                     home,
                     '.config',
-                    'sendemail-safe',
+                    'sendEmail-safe',
                     'brevo.json'
                 )
                 self.assertEqual(safe.resolve_config('brevo'), expected)

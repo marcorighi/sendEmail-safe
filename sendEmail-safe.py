@@ -16,6 +16,7 @@ import email.mime.multipart
 import email.mime.text
 import email.utils
 import json
+import sendemail_safe_profiles as profiles
 import mimetypes
 import os
 import pwd
@@ -27,8 +28,8 @@ import sys
 import time
 
 PROGRAM = 'sendEmail-safe.py'
-VERSION = '1.1.0'
-CONFIG_DIRNAME = os.path.join('.config', 'sendemail-safe')
+VERSION = '1.2.0'
+CONFIG_DIRNAME = profiles.NEW_CONFIG_DIR
 SUPPORTED_MESSAGE_OPTIONS = {
     'fqdn',
     'message-charset',
@@ -91,37 +92,11 @@ def expand_effective_user_home(path):
 
 
 def resolve_config(value):
-    """Resolve a profile name or a path inside the effective user's home.
-
-    A simple profile name resolves to:
-      ~/.config/sendemail-safe/PROFILE.json
-
-    A value containing a slash is treated as an explicit path. Explicit paths
-    are accepted only when their resolved target remains inside the effective
-    user's home directory.
-    """
-    if not value:
-        fail('specify --config PROFILE or --config PATH')
-
-    home = effective_home()
-    config_root = os.path.join(home, CONFIG_DIRNAME)
-
-    if value == '~':
-        candidate = home
-    elif value.startswith('~/'):
-        candidate = os.path.join(home, value[2:])
-    elif os.path.isabs(value):
-        candidate = value
-    elif '/' in value or value.startswith('.'):
-        candidate = os.path.abspath(value)
-    else:
-        filename = value if value.endswith('.json') else value + '.json'
-        candidate = os.path.join(config_root, filename)
-
-    candidate = os.path.realpath(candidate)
-    if not path_is_inside(candidate, home):
-        fail('the configuration file must be inside {}'.format(home))
-    return candidate
+    """Resolve a profile name/path, also accepting the legacy directory."""
+    try:
+        return profiles.resolve_config(value, home=effective_home())
+    except ValueError as exc:
+        fail(str(exc))
 
 
 def load_config(path):
@@ -243,13 +218,14 @@ def take_many(arguments, position):
 
 def print_help():
     print(
-        'Usage: sendEmail-safe.py --config PROFILE -t TO... '
+        'Usage: sendEmail-safe.py [-C PROFILE] -t TO... '
         '-u SUBJECT -m TEXT\n'
         '       [supported sendEmail-compatible options]\n\n'
         'Configuration:\n'
-        '  -C, --config VALUE   Profile name or JSON path (required)\n'
+        '  -C, --config VALUE   Profile name or JSON path (optional)\n'
         '                       PROFILE resolves to\n'
-        '                       ~/.config/sendemail-safe/PROFILE.json\n\n'
+        '                       ~/.config/sendEmail-safe/PROFILE.json\n'
+        '                       Without it: unique profile, or unique -f match\n\n'
         'Message:\n'
         '  -f FROM              Envelope/header sender; profile default if omitted\n'
         '  -t TO...             Recipients\n'
@@ -378,8 +354,6 @@ def parse(arguments):
 
         fail('unsupported option: ' + argument)
 
-    if not data['config']:
-        fail('missing --config PROFILE')
     return data
 
 
@@ -535,7 +509,15 @@ def tls_context(config):
 def main():
     harden_process()
     data = parse(sys.argv[1:])
-    config_path = resolve_config(data['config'])
+    if data['config']:
+        config_path = resolve_config(data['config'])
+    else:
+        try:
+            config_path = profiles.choose_default_profile(
+                sender=data['from'], home=effective_home()
+            )
+        except ValueError as exc:
+            fail(str(exc))
     config = load_config(config_path)
 
     if config.get('provider') == 'gmail_api':

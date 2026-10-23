@@ -12,7 +12,10 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPTS = (
     'sendEmail-safe.py',
     'sendEmail-safe-configure.py',
-    'sendEmail-safe-migrate.py'
+    'sendEmail-safe-migrate.py',
+    'sendEmail-safe-google-auth.py',
+    'sendemail_safe_google.py',
+    'sendemail_safe_profiles.py'
 )
 
 
