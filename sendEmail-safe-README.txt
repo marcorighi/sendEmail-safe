@@ -1,6 +1,22 @@
 SENDEMAIL-SAFE OPERATIONAL GUIDE
 ===============================
 
+Default profile naming (1.2.0)
+------------------------------
+
+New profiles are created in ~/.config/sendEmail-safe/ with a file name
+made from login + SMTP server (or Gmail account + gmail.googleapis.com).
+Names contain only ASCII letters, digits and underscores; spaces and
+punctuation are normalized using a detox-like standard-library function.
+
+SMTP: run sendEmail-safe-configure.py without --config to generate a name.
+Gmail: run sendEmail-safe-google-auth.py --from ACCOUNT --client-secrets FILE.
+
+--config NAME|PATH remains supported; existing profiles in the older
+~/.config/sendemail-safe/ directory still work and are not moved.
+The sender auto-selects only if a single safe profile matches. For multiple
+profiles specify --config (or a uniquely identifying -f address).
+
 Purpose
 -------
 
@@ -40,7 +56,7 @@ For scripts executed by root:
 
 A simple profile name resolves to:
 
-  ~/.config/sendemail-safe/PROFILE.json
+  ~/.config/sendEmail-safe/PROFILE.json
 
 Examples:
 
