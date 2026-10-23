@@ -34,4 +34,4 @@ jobs:
             "https://codeload.github.com/marcorighi/sendEmail-safe/tar.gz/${source_commit}" \
             -o source-1.2.0.tar.gz
           sha256sum source-1.2.0.tar.gz
-          tar -tzf source-1.2.0.tar.gz | head -n 5
+          tar -tzf source-1.2.0.tar.gz | sed -n '1,5p'
