@@ -25,13 +25,13 @@ jobs:
   release_archive:
     runs-on: ubuntu-latest
     steps:
-      - name: Verify immutable upstream source snapshot for 1.1.0
+      - name: Verify immutable upstream source snapshot for 1.2.0
         shell: bash
         run: |
           set -euo pipefail
-          source_commit=71162095ac38bfede1f9fb6b19ec395a6ae012f0
+          source_commit=c1dac524b3b58e5521e73f5e52eaeea14e781fcd
           curl --fail --location --retry 3 --silent --show-error \
             "https://codeload.github.com/marcorighi/sendEmail-safe/tar.gz/${source_commit}" \
-            -o source-1.1.0.tar.gz
-          sha256sum source-1.1.0.tar.gz
-          tar -tzf source-1.1.0.tar.gz | head -n 5
+            -o source-1.2.0.tar.gz
+          sha256sum source-1.2.0.tar.gz
+          tar -tzf source-1.2.0.tar.gz | head -n 5
