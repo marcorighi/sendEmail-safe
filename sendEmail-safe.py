@@ -28,7 +28,7 @@ import sys
 import time
 
 PROGRAM = 'sendEmail-safe.py'
-VERSION = '1.2.0'
+VERSION = '1.2.1'
 CONFIG_DIRNAME = profiles.NEW_CONFIG_DIR
 SUPPORTED_MESSAGE_OPTIONS = {
     'fqdn',
