@@ -1,20 +1,16 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "sendEmail-safe SMTP profile",
+  "title": "sendEmail-safe SMTP or Gmail API profile",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "auth",
-    "from",
-    "host",
-    "password",
-    "port",
-    "security",
-    "timeout",
-    "tls_verify",
-    "user"
-  ],
   "properties": {
+    "provider": {
+      "type": "string",
+      "enum": [
+        "smtp",
+        "gmail_api"
+      ]
+    },
     "auth": {
       "type": "boolean"
     },
@@ -61,6 +57,54 @@
     },
     "user": {
       "type": "string"
+    },
+    "oauth_client_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "oauth_client_secret": {
+      "type": "string"
+    },
+    "oauth_refresh_token": {
+      "type": "string",
+      "minLength": 1
     }
-  }
+  },
+  "oneOf": [
+    {
+      "properties": {
+        "provider": {
+          "enum": [
+            "smtp"
+          ]
+        }
+      },
+      "required": [
+        "auth",
+        "from",
+        "host",
+        "password",
+        "port",
+        "security",
+        "timeout",
+        "tls_verify",
+        "user"
+      ]
+    },
+    {
+      "properties": {
+        "provider": {
+          "enum": [
+            "gmail_api"
+          ]
+        }
+      },
+      "required": [
+        "provider",
+        "from",
+        "oauth_client_id",
+        "oauth_refresh_token"
+      ]
+    }
+  ]
 }
