@@ -11,6 +11,21 @@ The format is based on Keep a Changelog principles, and the project uses semanti
 - Additional compatibility tests against real-world legacy `sendEmail` command patterns.
 - Runtime validation on additional Linux distributions and older Python installations.
 
+## [1.1.0] - 2026-10-23
+
+### Added
+
+- Gmail API OAuth 2.0 sending with narrowly scoped `gmail.send` permission.
+- PKCE browser authorization helper with per-user, permission-restricted profiles.
+- Refresh-token based authorization without Gmail application passwords.
+- Isolated Gmail API and OAuth tests, plus GitHub Actions CI.
+
+### Changed
+
+- Maintained backward-compatible SMTP behavior and `sendEmail` option subset.
+- Added support for distribution packages placing the Gmail helper in `/usr/bin`.
+- Gmail support is experimental until real-account consent and delivery are validated.
+
 ## [1.0.1] - 2026-09-18
 
 ### Fixed

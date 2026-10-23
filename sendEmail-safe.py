@@ -27,7 +27,7 @@ import sys
 import time
 
 PROGRAM = 'sendEmail-safe.py'
-VERSION = '1.0.1'
+VERSION = '1.1.0'
 CONFIG_DIRNAME = os.path.join('.config', 'sendemail-safe')
 SUPPORTED_MESSAGE_OPTIONS = {
     'fqdn',
