@@ -160,6 +160,28 @@ def load_config(path):
         if descriptor is not None:
             os.close(descriptor)
 
+    if not isinstance(config, dict):
+        fail('profile must contain a JSON object')
+
+    provider = config.get('provider', 'smtp')
+    if provider == 'gmail_api':
+        needed = ('from', 'oauth_client_id', 'oauth_refresh_token')
+        missing = [
+            name for name in needed
+            if not isinstance(config.get(name), str) or not config.get(name)
+        ]
+        if missing:
+            fail('missing Gmail API profile fields: ' + ', '.join(missing))
+        try:
+            config['timeout'] = float(config.get('timeout', 30))
+        except (TypeError, ValueError):
+            fail('invalid Gmail API timeout')
+        if config['timeout'] <= 0:
+            fail('Gmail API timeout must be positive')
+        return config
+    if provider != 'smtp':
+        fail('unsupported provider: ' + str(provider))
+
     required = ('host', 'port', 'from', 'security')
     missing = [
         name for name in required
@@ -515,6 +537,44 @@ def main():
     data = parse(sys.argv[1:])
     config_path = resolve_config(data['config'])
     config = load_config(config_path)
+
+    if config.get('provider') == 'gmail_api':
+        # SMTP-only options must not silently change meaning for Gmail API.
+        if data['server'] or data['user'] or any(
+            key in data['options'] for key in ('tls', 'fqdn')
+        ):
+            fail('SMTP overrides are not supported with Gmail API profiles')
+        try:
+            timeout = float(
+                data['options'].get('timeout', config.get('timeout', 30))
+            )
+        except (TypeError, ValueError):
+            fail('invalid timeout')
+        if timeout <= 0:
+            fail('timeout must be greater than zero')
+        message, sender_address, recipients = build_message(data, config)
+        if data['bcc']:
+            # Gmail API finds recipients in MIME headers, unlike SMTP envelope.
+            message['Bcc'] = ', '.join(data['bcc'])
+        log_path = data['log'] or config.get('log')
+        try:
+            from sendemail_safe_google import send_message
+            send_message(message, config, timeout)
+            write_log(log_path, 'OK', 'gmail_api recipients={}'.format(
+                len(recipients)
+            ))
+            if not data['quiet']:
+                print('Email sent through Gmail API using {}.'.format(
+                    config_path
+                ))
+        except Exception as exc:
+            write_log(log_path, 'ERROR', 'gmail_api {}'.format(
+                type(exc).__name__
+            ))
+            fail('Gmail API delivery failed: {}: {}'.format(
+                type(exc).__name__, exc
+            ), 1)
+        return
 
     host, port = resolve_server(data['server'], config)
     user = data['user'] or config.get('user')
