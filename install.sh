@@ -16,10 +16,14 @@ install -o root -g root -m 0755 \
     "$SCRIPT_DIR/sendEmail-safe.py" \
     "$SCRIPT_DIR/sendEmail-safe-configure.py" \
     "$SCRIPT_DIR/sendEmail-safe-migrate.py" \
+    "$SCRIPT_DIR/sendEmail-safe-google-auth.py" \
+    "$SCRIPT_DIR/sendemail_safe_google.py" \
     "$BINDIR/"
 
 printf 'Installed:\n'
 printf '  %s/sendEmail-safe.py\n' "$BINDIR"
 printf '  %s/sendEmail-safe-configure.py\n' "$BINDIR"
 printf '  %s/sendEmail-safe-migrate.py\n' "$BINDIR"
+printf '  %s/sendEmail-safe-google-auth.py\n' "$BINDIR"
+printf '  %s/sendemail_safe_google.py\n' "$BINDIR"
 printf '\nUser profiles were not created or modified.\n'
