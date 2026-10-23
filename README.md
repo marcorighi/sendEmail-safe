@@ -172,6 +172,78 @@ Unauthenticated SMTP can be configured with:
 }
 ```
 
+
+## Gmail OAuth 2.0 with send-only permission (experimental)
+
+The optional `gmail_api` provider sends email through the **Gmail API**, not SMTP.
+It uses an OAuth 2.0 authorization flow (PKCE) and requests only
+`https://www.googleapis.com/auth/gmail.send`. It does not require a Gmail
+app password or the broad `https://mail.google.com/` SMTP OAuth scope.
+Existing SMTP profiles and commands continue to work unchanged.
+
+Requirements: an account allowed to use the Gmail API, and a Google Cloud
+project with Gmail API enabled, OAuth consent configured, and an **OAuth
+Desktop app** client JSON downloaded locally. In Testing mode, add the Gmail
+account as a test user. Only create credentials in your own Google Cloud
+project. Never commit downloaded OAuth client files or real profiles.
+
+After installing, run this **as the Unix user who will send the mail**:
+
+```bash
+sendEmail-safe-google-auth.py \
+  --config gmail-personal \
+  --from 'your-account@gmail.com' \
+  --client-secrets "$HOME/private/google-desktop-client.json"
+```
+
+A temporary web server listens on `127.0.0.1` and opens the system browser
+(Brave is fine if configured as the default). Consent is bound to a random
+state and PKCE verifier. The browser redirects to loopback to finish
+authorization. This bootstrap requires an interactive browser on the same
+machine; headless servers may instead use a previously authorized profile
+transferred securely for the same Unix user.
+
+The helper **refuses to overwrite** an existing profile and saves a new
+`~/.config/sendemail-safe/gmail-personal.json` with permissions 0600.
+The long-lived **refresh token is stored in clear text** under that file,
+protected by the same ownership and permissions as SMTP passwords.
+It is a sensitive credential: do not publish, log, back up unencrypted or
+pass it on the command line. Access tokens are requested in memory as needed
+over HTTPS. A Google OAuth app in External/Testing status may issue refresh
+tokens that expire after 7 days; other revocation policies can also apply.
+
+Send with the existing interface:
+
+```bash
+sendEmail-safe.py \
+  --config gmail-personal \
+  -t recipient@example.org \
+  -u 'Gmail API test' \
+  -m 'Sent using gmail.send OAuth permission.'
+```
+
+Attachments, HTML, To/Cc/Bcc are supported through the existing MIME builder.
+For the Gmail API, Bcc recipients are also set in the outgoing MIME headers
+as required by Gmail API recipient discovery; Gmail handles delivery privacy.
+SMTP-only overrides (`-s`, `-xu`, `-o tls=...`, `-o fqdn=...`) are
+rejected for Gmail API profiles rather than silently ignored.
+
+The OAuth helper requires a local browser only at initial authorization;
+ordinary send operations use HTTPS with certificate verification and work
+without a browser. No third-party Python dependencies are required.
+
+OAuth setup references:
+
+- https://developers.google.com/identity/protocols/oauth2/native-app
+- https://developers.google.com/workspace/gmail/api/guides/sending
+- https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.messages/send
+- https://developers.google.com/identity/protocols/oauth2/
+
+**Important:** This feature is provided as a code/test baseline. Unit tests
+mock network calls. Validate OAuth consent, one real delivery, Bcc behavior
+and refresh-token lifecycle with a dedicated Gmail test account before
+enabling production automation.
+
 ## Sending an email
 
 ```bash
