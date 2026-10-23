@@ -191,5 +191,33 @@ class GmailTests(unittest.TestCase):
                 auth.read_client(source)
 
 
+    def test_default_client_rejects_public_secrets_directory(self):
+        with tempfile.TemporaryDirectory() as home:
+            root = os.path.join(home, '.config', 'sendEmail-safe')
+            directory = os.path.join(root, 'secrets')
+            os.makedirs(directory, mode=0o700)
+            shared = os.path.join(directory, 'google_oauth_client.json')
+            with open(shared, 'w') as out:
+                json.dump({'installed': {'client_id': 'id'}}, out)
+            os.chmod(shared, 0o600)
+            os.chmod(directory, 0o755)
+            with self.assertRaises(ValueError):
+                auth.resolve_client_secrets(
+                    None, 'test@gmail.com', home=home
+                )
+            os.chmod(directory, 0o700)
+            os.chmod(root, 0o755)
+            with self.assertRaises(ValueError):
+                auth.resolve_client_secrets(
+                    None, 'test@gmail.com', home=home
+                )
+            os.chmod(root, 0o700)
+            self.assertEqual(
+                auth.resolve_client_secrets(
+                    None, 'test@gmail.com', home=home
+                ), shared
+            )
+
+
 if __name__ == '__main__':
     unittest.main()
