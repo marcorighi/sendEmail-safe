@@ -19,7 +19,7 @@ The original `sendEmail` invocation places the SMTP password in the process argu
 - Common `sendEmail` options are supported to simplify migration.
 - A migration utility updates shell scripts and creates a backup before writing.
 - The implementation uses only the Python standard library.
-- The three programs are written for Python 3.5.3 and later.
+- All command-line programs are written for Python 3.5.3 and later.
 
 ## Threat model and limitations
 
@@ -47,6 +47,8 @@ Other command-line values may remain visible, including recipients, subject text
 - `sendEmail-safe.py` — SMTP sender.
 - `sendEmail-safe-configure.py` — interactive profile creator and editor.
 - `sendEmail-safe-migrate.py` — shell-script migration utility.
+- `sendEmail-safe-google-auth.py` — Gmail OAuth authorization helper.
+- `sendemail_safe_profiles.py` — shared deterministic profile naming and selection logic.
 - `sendEmail-safe-README.txt` — plain-text operational guide.
 - `install.sh` and `uninstall.sh` — system-wide installation helpers.
 - `examples/` — example profile and invocation.
